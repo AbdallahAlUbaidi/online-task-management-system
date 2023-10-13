@@ -62,7 +62,6 @@ describe("Error handling middleware", () => {
 			expect(next).not.toBeCalled();
 		}
 	});
-	// Should forward the error if it is not an Api error
 
 	it("Should forward the error if it is not an Api error", () => {
 		const errors = [
