@@ -32,31 +32,37 @@ describe("postRegisterController callback", () => {
 	let createUser, getUserByName, getUserByEmail, hashPassword,
 		validateUsername, validateEmail, validatePassword,
 		postRegisterController, req, res, next;
+	
+	let UserModel = {};
 
 	beforeEach(() => {
 		createUser = vi.fn();
-		getUserByName = vi.fn(username => new Promise(resolve => {
+		UserModel.findOne = vi.fn(({ username, email }) => new Promise(resolve => {
 			setTimeout(() => {
-				if (/used/gi.test(username))
-					resolve({
-						username,
-						email: "email",
-						password: "$hash$"
-					});
-				else resolve(undefined);
-			});
+				if (username) {
+					if (/used/gi.test(username))
+						resolve({
+							username,
+							email: "email",
+							password: "$hash$"
+						});
+					else resolve(undefined);
+				}
+
+				if (email) {
+					if (/used/gi.test(email))
+						resolve({
+							username: "username",
+							email,
+							password: "$hash$"
+						});
+					else resolve(undefined);
+				}
+			}, 100);
 		}));
-		getUserByEmail = vi.fn(email => new Promise(resolve => {
-			setTimeout(() => {
-				if (/used/gi.test(email))
-					resolve({
-						username: "username",
-						email,
-						password: "$hash$"
-					});
-				else resolve(undefined);
-			});
-		}));
+
+		getUserByName = vi.fn(async ({ username, UserModel }) => UserModel.findOne({ username }));
+		getUserByEmail = vi.fn(async ({ email, UserModel }) => UserModel.findOne({ email }));
 		hashPassword = vi.fn(pass => pass);
 		validateUsername = vi.fn(username => !/invalid/gi.test(username));
 		validateEmail = vi.fn(email => !/invalid/gi.test(email));
@@ -66,6 +72,7 @@ describe("postRegisterController callback", () => {
 			createUser,
 			getUserByName,
 			getUserByEmail,
+			UserModel,
 			hashPassword,
 			validateUsername,
 			validateEmail,
@@ -123,7 +130,7 @@ describe("postRegisterController callback", () => {
 			req.body = { username: "username", email: "email", password: "password" };
 
 			//Action
-			await postRegisterController(req, res);
+			await postRegisterController(req, res, next);
 
 			expect(hashPassword).toBeCalledTimes(1);
 			expect(hashPassword.mock.results[0].value).not.toBeInstanceOf(Promise);
@@ -201,7 +208,7 @@ describe("postRegisterController callback", () => {
 			await postRegisterController(req, res, next);
 
 			expect(getUserByName).toBeCalledTimes(1);
-			expect(getUserByName.mock.calls[0][0]).toBe(req.body.username);
+			expect(getUserByName.mock.calls[0][0].username).toBe(req.body.username);
 			expect(getUserByName.mock.results[0].value).not.toBeInstanceOf(Promise);
 			expect(next).toBeCalledTimes(1);
 			const err = next.mock.calls[0][0];
@@ -245,7 +252,7 @@ describe("postRegisterController callback", () => {
 			await postRegisterController(req, res, next);
 
 			expect(getUserByEmail).toBeCalledTimes(1);
-			expect(getUserByEmail.mock.calls[0][0]).toBe(req.body.email);
+			expect(getUserByEmail.mock.calls[0][0].email).toBe(req.body.email);
 			expect(getUserByEmail.mock.results[0].value).not.toBeInstanceOf(Promise);
 			expect(next).toBeCalledTimes(1);
 			const err = next.mock.calls[0][0];
