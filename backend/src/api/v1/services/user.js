@@ -32,3 +32,12 @@ export const getUserByEmail = async ({
 		email
 	});
 };
+
+export const getUserById = async ({
+	id,
+	UserModel
+}) => {
+	if (!id)
+		return null;
+	return await UserModel.findById(id);
+};
