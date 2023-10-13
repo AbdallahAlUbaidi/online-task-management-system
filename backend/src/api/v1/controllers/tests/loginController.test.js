@@ -124,7 +124,7 @@ describe("postLoginController callback", () => {
 			expect(next).toBeCalledTimes(1);
 			const err = next.mock.calls[0][0];
 			expect(err).toBeInstanceOf(ApiError);
-			expect(err.httpStatusCode).toBe(400);
+			expect(err.httpStatusCode).toBe(401);
 			expect(err.errorCode).toBe(INVALID_CREDENTIALS);
 
 		}
@@ -158,7 +158,7 @@ describe("postLoginController callback", () => {
 			expect(next).toBeCalledTimes(1);
 			const err = next.mock.calls[0][0];
 			expect(err).toBeInstanceOf(ApiError);
-			expect(err.httpStatusCode).toBe(400);
+			expect(err.httpStatusCode).toBe(401);
 			expect(err.errorCode).toBe(INVALID_CREDENTIALS);
 
 		}

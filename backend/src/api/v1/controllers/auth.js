@@ -61,9 +61,9 @@ export const initializePostLoginController = ({
 	try {
 		const user = await getUserByName({ username, UserModel });
 		if (!user)
-			throw new ApiError(INVALID_CREDENTIALS, "Invalid credentials", 400);
+			throw new ApiError(INVALID_CREDENTIALS, "Invalid credentials", 401);
 		if (!await comparePasswords(password, user.password))
-			throw new ApiError(INVALID_CREDENTIALS, "Invalid credentials", 400);
+			throw new ApiError(INVALID_CREDENTIALS, "Invalid credentials", 401);
 		const token = await issueToken(user.id);
 		res.status(200).json({ token });
 
