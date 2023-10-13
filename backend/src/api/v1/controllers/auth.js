@@ -1,5 +1,6 @@
 import ApiError from "../../ApiError.js";
 import {
+	INVALID_CREDENTIALS,
 	VALIDATION_ERROR,
 } from "../../../constants/apiErrorCodes.js";
 
@@ -51,8 +52,24 @@ export const initializePostRegisterController = ({
 	};
 
 export const initializePostLoginController = ({
+	getUserByName,
+	comparePasswords,
+	issueToken,
+	UserModel
+}) => async (req, res, next) => {
+	const { username, password } = req.body;
+	try {
+		const user = await getUserByName({ username, UserModel });
+		if (!user)
+			throw new ApiError(INVALID_CREDENTIALS, "Invalid credentials", 400);
+		if (!await comparePasswords(password, user.password))
+			throw new ApiError(INVALID_CREDENTIALS, "Invalid credentials", 400);
+		const token = await issueToken(user.id);
+		res.status(200).json({ token });
 
-}) => (req, res, next) => {
+	} catch (err) {
+		next(err);
+	}
 
 };
 
