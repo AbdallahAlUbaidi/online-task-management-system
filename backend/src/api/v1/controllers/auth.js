@@ -1,4 +1,4 @@
-import ApiError from "../../ApiError";
+import ApiError from "../../ApiError.js";
 import {
 	VALIDATION_ERROR,
 } from "../../../constants/apiErrorCodes.js";
@@ -7,6 +7,7 @@ export const initializePostRegisterController = ({
 	createUser,
 	getUserByName,
 	getUserByEmail,
+	UserModel,
 	hashPassword,
 	validateUsername,
 	validateEmail,
@@ -23,24 +24,25 @@ export const initializePostRegisterController = ({
 			if (!validateUsername(username))
 				throw new ApiError(VALIDATION_ERROR, "Invalid username", 400);
 
-			if (await getUserByName(username))
+			if (await getUserByName({ username, UserModel }))
 				throw new ApiError(VALIDATION_ERROR, "Username already exists", 400);
 
 			if (!validateEmail(email))
 				throw new ApiError(VALIDATION_ERROR, "invalid email", 400);
 
-			if (await getUserByEmail(email))
+			if (await getUserByEmail({ email, UserModel }))
 				throw new ApiError(VALIDATION_ERROR, "email already exists", 400);
 
 			if (!validatePassword(password))
-				throw new ApiError(VALIDATION_ERROR, "Password not strong enough" , 400);
+				throw new ApiError(VALIDATION_ERROR, "Password not strong enough", 400);
 
 			const hashedPass = await hashPassword(password);
 
 			await createUser({
 				username,
 				email,
-				password: hashedPass
+				password: hashedPass,
+				UserModel
 			});
 			res.sendStatus(201);
 		} catch (err) {
@@ -48,6 +50,13 @@ export const initializePostRegisterController = ({
 		}
 	};
 
+export const initializePostLoginController = ({
+
+}) => (req, res, next) => {
+
+};
+
 export default {
 	initializePostRegisterController,
+	initializePostLoginController
 };
