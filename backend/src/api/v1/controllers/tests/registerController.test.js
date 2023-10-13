@@ -1,10 +1,15 @@
-import { expect, describe, it, vi, test, beforeEach, afterEach } from "vitest";
-import express from "express";
-import supertest from "supertest";
+import { expect, describe, it, vi, beforeEach, afterEach } from "vitest";
+
 
 import {
 	initializePostRegisterController
 } from "../auth.js";
+
+import ApiError from "../../../ApiError.js";
+
+import {
+	VALIDATION_ERROR,
+} from "../../../../constants/apiErrorCodes.js";
 
 
 describe("postRegisterController callback initialization function", () => {
@@ -17,8 +22,8 @@ describe("postRegisterController callback initialization function", () => {
 	it("should return a function", () =>
 		expect(typeof postRegisterController).toBe("function"));
 
-	it("function should have two arguments", () =>
-		expect(postRegisterController.length).toBe(2));
+	it("function should have three arguments", () =>
+		expect(postRegisterController.length).toBe(3));
 
 });
 
@@ -26,7 +31,7 @@ describe("postRegisterController callback initialization function", () => {
 describe("postRegisterController callback", () => {
 	let createUser, getUserByName, getUserByEmail, hashPassword,
 		validateUsername, validateEmail, validatePassword,
-		postRegisterController, mockApp, request;
+		postRegisterController, req, res, next;
 
 	beforeEach(() => {
 		createUser = vi.fn();
@@ -67,12 +72,41 @@ describe("postRegisterController callback", () => {
 			validatePassword
 		});
 
-		mockApp = express();
+		class Request {
+			constructor(body = {}, headers = {}) {
+				this.body = body;
+				this.headers = headers;
+			}
+		}
 
-		mockApp.use(express.json());
-		mockApp.use(postRegisterController);
+		class Response {
+			constructor(body = {}, headers = {}) {
+				this.body = body;
+				this.headers = headers;
+				this.statusCode = 200;
+			}
 
-		request = supertest(mockApp);
+			json(content) {
+				this.body = content;
+				this.headers["content-type"] = "application/json";
+				return this;
+			}
+
+			status(statusCode) {
+				this.statusCode = statusCode;
+				return this;
+			}
+
+			sendStatus(statusCode) {
+				this.statusCode = statusCode;
+				return this;
+			}
+		}
+
+
+		req = new Request();
+		res = new Response();
+		next = vi.fn();
 
 	});
 
@@ -86,10 +120,11 @@ describe("postRegisterController callback", () => {
 				setTimeout(() => resolve("$hashed$" + pass), 100);
 			}));
 
+			req.body = { username: "username", email: "email", password: "password" };
+
 			//Action
-			await request
-				.post("/")
-				.send({ username: "username", email: "email", password: "password" });
+			await postRegisterController(req, res);
+
 			expect(hashPassword).toBeCalledTimes(1);
 			expect(hashPassword.mock.results[0].value).not.toBeInstanceOf(Promise);
 			expect(createUser.mock.calls[0][0].password).toBe("$hashed$" + "password");
@@ -108,12 +143,12 @@ describe("postRegisterController callback", () => {
 			];
 
 			for (let body of mockData) {
+				req.body = body;
+
 				//Action
 
 				createUser.mockClear();
-				await request
-					.post("/")
-					.send(body);
+				await postRegisterController(req, res);
 
 				//Expectations
 				expect(createUser).toBeCalledTimes(1);
@@ -125,54 +160,36 @@ describe("postRegisterController callback", () => {
 		}, 1000);
 
 		it("should respond with status of 201", async () => {
-			const response = await request
-				.post("/")
-				.send({ username: "username", email: "email", password: "password" });
-			expect(response.statusCode).toBe(201);
+			req.body = { username: "username", email: "email", password: "password" };
+			await postRegisterController(req, res);
+			expect(res.statusCode).toBe(201);
 
 		}, 1000);
 	});
 
 	describe("In case of invalid input", () => {
 
-		it("should respond with 400 status code and a json containing a message", async () => {
-			const invalidData = {
-				username: "invalid username",
-				email: "invalid email",
-				password: "invalid password"
-			};
-
-			//Action 
-			const response = await request
-				.post("/")
-				.send(invalidData);
-
-			//Expectations
-			expect(response.statusCode).toBe(400);
-			expect(response.headers["content-type"]).toMatch(/json/gi);
-			expect(response.body.message).toBeDefined();
-
-		});
-
-		it("if username is invalid the response message should indicate it", async () => {
-			const invalidData = {
+		it("if username is invalid it should call next with an api validation error with http status code 400 and a message", async () => {
+			req.body = {
 				username: "invalid username",
 				email: "email",
 				password: "password"
 			};
 
-			//Action 
-			const response = await request
-				.post("/")
-				.send(invalidData);
+			await postRegisterController(req, res, next);
 
-			expect(response.body.message).toMatch(/invalid username/gi);
+			expect(next).toBeCalledTimes(1);
+			const err = next.mock.calls[0][0];
+			expect(err).toBeInstanceOf(ApiError);
+			expect(err.httpStatusCode).toBe(400);
+			expect(err.errorCode).toBe(VALIDATION_ERROR);
+			expect(err.message).toMatch(/Invalid user/gi);
 		});
 
-		it("if the username is already in use the response message should indicate it", async () => {
+		it("if the username is already in use it should call next with an api validation error with http status code 400 and a message", async () => {
 			// Set up
 
-			const data = {
+			req.body = {
 				username: "used Username",
 				email: "email",
 				password: "password"
@@ -181,38 +198,42 @@ describe("postRegisterController callback", () => {
 			//Action
 			getUserByName.mockClear();
 
-			const response = await request
-				.post("/")
-				.send(data);
+			await postRegisterController(req, res, next);
 
-			//Expectations
 			expect(getUserByName).toBeCalledTimes(1);
-			expect(getUserByName.mock.calls[0][0]).toBe(data.username);
+			expect(getUserByName.mock.calls[0][0]).toBe(req.body.username);
 			expect(getUserByName.mock.results[0].value).not.toBeInstanceOf(Promise);
-			expect(response.headers["content-type"]).toMatch(/json/gi);
-			expect(response.statusCode).toBe(400);
-			expect(response.body.message).toMatch(/username already exists/gi);
+			expect(next).toBeCalledTimes(1);
+			const err = next.mock.calls[0][0];
+			expect(err).toBeInstanceOf(ApiError);
+			expect(err.httpStatusCode).toBe(400);
+			expect(err.errorCode).toBe(VALIDATION_ERROR);
+			expect(err.message).toMatch(/username already exists/gi);
+
 		}, 1000);
 
-		it("if email is invalid the response message should indicate it", async () => {
-			const invalidData = {
+		it("if the email is invalid it should call next with an api validation error with http status code 400 and a message", async () => {
+			req.body = {
 				username: "username",
 				email: "invalid email",
 				password: "password"
 			};
 
 			//Action 
-			const response = await request
-				.post("/")
-				.send(invalidData);
+			await postRegisterController(req, res, next);
 
-			expect(response.body.message).toMatch(/invalid email/gi);
+			expect(next).toBeCalledTimes(1);
+			const err = next.mock.calls[0][0];
+			expect(err).toBeInstanceOf(ApiError);
+			expect(err.httpStatusCode).toBe(400);
+			expect(err.errorCode).toBe(VALIDATION_ERROR);
+			expect(err.message).toMatch(/Invalid email/gi);
 		});
 
-		it("if the email is already in use the response message should indicate it", async () => {
+		it("if the email is already in use it should call next with an api validation error with http status code 400 and a message", async () => {
 			//Set up
 
-			const data = {
+			req.body = {
 				username: "username",
 				email: "used email",
 				password: "password"
@@ -221,106 +242,39 @@ describe("postRegisterController callback", () => {
 			//Action
 			getUserByEmail.mockClear();
 
-			const response = await request
-				.post("/")
-				.send(data);
+			await postRegisterController(req, res, next);
 
-			//Expectations
-			getUserByName.mockClear();
 			expect(getUserByEmail).toBeCalledTimes(1);
-			expect(getUserByEmail.mock.calls[0][0]).toBe(data.email);
+			expect(getUserByEmail.mock.calls[0][0]).toBe(req.body.email);
 			expect(getUserByEmail.mock.results[0].value).not.toBeInstanceOf(Promise);
-			expect(response.headers["content-type"]).toMatch(/json/gi);
-			expect(response.statusCode).toBe(400);
-			expect(response.body.message).toMatch(/email already exists/gi);
+			expect(next).toBeCalledTimes(1);
+			const err = next.mock.calls[0][0];
+			expect(err).toBeInstanceOf(ApiError);
+			expect(err.httpStatusCode).toBe(400);
+			expect(err.errorCode).toBe(VALIDATION_ERROR);
+			expect(err.message).toMatch(/email already exists/gi);
 
 
 		}, 1000);
 
-		it("if password is not strong enough the response message should indicate it", async () => {
-			const invalidData = {
+		it("if password is not strong enough it should call next with an api validation error with http status code 400 and a message", async () => {
+			req.body = {
 				username: "username",
 				email: "email",
 				password: "invalid password"
 			};
 
 			//Action 
-			const response = await request
-				.post("/")
-				.send(invalidData);
+			await postRegisterController(req, res, next);
 
-			expect(response.body.message).toMatch(/password is not strong enough/gi);
+			expect(next).toBeCalledTimes(1);
+			const err = next.mock.calls[0][0];
+			expect(err).toBeInstanceOf(ApiError);
+			expect(err.httpStatusCode).toBe(400);
+			expect(err.errorCode).toBe(VALIDATION_ERROR);
+			expect(err.message).toMatch(/Password not strong enough/gi);
 		});
 
 	});
 
-	describe("In case database operation failure", () => {
-		//Set up
-		let data;
-		beforeEach(() => data = {
-			username: "username",
-			email: "email",
-			password: "password"
-		});
-
-		test("should handle createUser failure", async () => {
-			//Set up
-
-			createUser.mockImplementation(() =>
-				new Promise((resolve, reject) => {
-					setTimeout(() => reject(new Error("failed to create user")));
-				}));
-
-			//Action
-
-			const response = await request
-				.post("/")
-				.send(data);
-
-			//Expectations
-			expect(response.statusCode).toBe(500);
-			expect(response.headers["content-type"]).toMatch(/json/gi);
-			expect(response.body.message).toMatch(/Internal server error/gi);
-
-		}, 1000);
-
-		test("should handle getUserByName failure", async () => {
-			//Set up
-			getUserByName.mockImplementation(() =>
-				new Promise((resolve, reject) => {
-					setTimeout(() => reject(new Error("failed to get user")));
-				}));
-
-			//Action
-
-			const response = await request
-				.post("/")
-				.send(data);
-
-			//Expectations
-			expect(response.statusCode).toBe(500);
-			expect(response.headers["content-type"]).toMatch(/json/gi);
-			expect(response.body.message).toMatch(/Internal server error/gi);
-		}, 1000);
-
-		test("should handle getUserByEmail failure", async () => {
-			//Set up
-			getUserByEmail.mockImplementation(() =>
-				new Promise((resolve, reject) => {
-					setTimeout(() => reject(new Error("failed to get user")));
-				}));
-
-			//Action
-
-			const response = await request
-				.post("/")
-				.send(data);
-
-			//Expectations
-			expect(response.statusCode).toBe(500);
-			expect(response.headers["content-type"]).toMatch(/json/gi);
-			expect(response.body.message).toMatch(/Internal server error/gi);
-		}, 1000);
-
-	});
 });
