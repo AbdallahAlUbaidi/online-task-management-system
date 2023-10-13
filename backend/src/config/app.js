@@ -45,9 +45,13 @@ const postLoginController = initializePostLoginController({
 
 });
 
+import errorHandler from "../middlewares/errorHandler.js";
+
 app.use("/api/v1/auth", authRouterInitializer({
 	postRegisterController,
 	postLoginController
 }));
+
+app.use(errorHandler);
 
 export default app;
