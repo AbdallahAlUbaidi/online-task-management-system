@@ -3,7 +3,8 @@ import { vi, describe, it, beforeEach, expect } from "vitest";
 import {
 	createUser,
 	getUserByName,
-	getUserByEmail
+	getUserByEmail,
+	getUserById
 } from "../user.js";
 
 describe("createUser service", () => {
@@ -236,6 +237,89 @@ describe("getUserByEmail service", () => {
 			});
 
 			expect(User.findOne.mock.results[0].value).not.toBeInstanceOf(Promise);
+			expect(user).toBeNull();
+		}
+	});
+});
+
+describe("getUserById service", () => {
+	let User = {};
+	beforeEach(() => {
+		User.findById = vi.fn(id =>
+			new Promise(resolve => {
+				setTimeout(() => {
+					if (!/existing/gi.test(id))
+						resolve(null);
+					else resolve({
+						_id: `ObjectId("${id}")`,
+						email: "email",
+						username: "username",
+						password: "$hash$"
+					});
+				}, 100);
+			}));
+	});
+
+	it("should call User.findById() with an id string", async () => {
+		let mockData = [
+			{ id: "id1415asd13" },
+			{ id: "id214115131" },
+			{ id: "id341115141" },
+		];
+
+		for (let data of mockData) {
+			User.findById.mockClear();
+			await getUserById({
+				...data,
+				UserModel: User
+			});
+
+			expect(User.findById).toBeCalledTimes(1);
+			expect(User.findById.mock.results[0].value).not.toBeInstanceOf(Promise);
+			expect(User.findById.mock.calls[0][0]).toBe(data.id);
+		}
+	});
+
+	it("should return a user object if a user exists", async () => {
+		let mockData = [
+			{ id: "existing id1415asd13" },
+			{ id: "existing id214115131" },
+			{ id: "existing id341115141" },
+		];
+
+		for (let data of mockData) {
+			User.findById.mockClear();
+			const user = await getUserById({
+				...data,
+				UserModel: User
+			});
+			expect(User.findById.mock.results[0].value).not.toBeInstanceOf(Promise);
+			expect(user._id).toBe(`ObjectId("${data.id}")`);
+			expect(user.username).toBeDefined();
+			expect(user.password).toBeDefined();
+		}
+	}, 1000);
+
+	it("should return null if no id is passed", async () => {
+		const user = await getUserById({ UserModel: User });
+		expect(user).toBeNull();
+	}, 1000);
+
+	it("should return null if not matching user is found", async () => {
+		let mockData = [
+			{ id: "id1" },
+			{ id: "id2" },
+			{ id: "id3" },
+		];
+
+		for (let data of mockData) {
+			User.findById.mockClear();
+			const user = await getUserById({
+				...data,
+				UserModel: User
+			});
+
+			expect(User.findById.mock.results[0].value).not.toBeInstanceOf(Promise);
 			expect(user).toBeNull();
 		}
 	});
