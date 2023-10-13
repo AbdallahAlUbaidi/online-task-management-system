@@ -20,8 +20,13 @@ import {
 } from "../api/v1/validators/user.js";
 
 import {
-	hashPassword
+	hashPassword,
+	comparePasswords
 } from "../helpers/passwordUtils.js";
+
+import {
+	issueToken,
+} from "../helpers/jsonWebTokenUtils.js";
 
 import {
 	initializePostRegisterController,
@@ -42,7 +47,10 @@ const postRegisterController = initializePostRegisterController({
 });
 
 const postLoginController = initializePostLoginController({
-
+	getUserByName,
+	issueToken,
+	UserModel,
+	comparePasswords
 });
 
 import errorHandler from "../middlewares/errorHandler.js";
