@@ -10,7 +10,8 @@ import UserModel from "../api/v1/models/User.js";
 import {
 	createUser,
 	getUserByName,
-	getUserByEmail
+	getUserByEmail,
+	getUserById
 } from "../api/v1/services/user.js";
 
 import {
@@ -26,6 +27,7 @@ import {
 
 import {
 	issueToken,
+	verifyToken
 } from "../helpers/jsonWebTokenUtils.js";
 
 import {
@@ -54,10 +56,17 @@ const postLoginController = initializePostLoginController({
 });
 
 import errorHandler from "../middlewares/errorHandler.js";
+import initializeAuthenticate from "../middlewares/authenticate.js";
 
 app.use("/api/v1/auth", authRouterInitializer({
 	postRegisterController,
 	postLoginController
+}));
+
+app.use(initializeAuthenticate({
+	verifyToken,
+	getUserById,
+	UserModel
 }));
 
 app.use(errorHandler);
