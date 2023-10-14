@@ -5,7 +5,16 @@ export const issueToken = async userId => jwt.sign({ sub: userId }, process.env.
 	expiresIn: "7d"
 });
 
-export const verifyToken = async token => jwt.verify(token, process.env.AUTH_KEY);
+export const verifyToken = token => new Promise((resolve, reject) => {
+	jwt.verify(token, process.env.AUTH_KEY, (error, payload) => {
+		if (error) {
+			if (error.name === "JsonWebTokenError")
+				return resolve(false);
+			reject(error);
+		}
+		resolve(payload);
+	});
+});
 
 
 export default {
