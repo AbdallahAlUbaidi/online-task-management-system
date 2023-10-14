@@ -70,7 +70,7 @@ describe("authenticate middleware function", () => {
 			Promise.resolve({
 				_id: generateFakeMongooseId(),
 			}));
-		req.headers["Authorization"] = `bearer ${await generateFakeJWT()}`;
+		req.headers["authorization"] = `bearer ${await generateFakeJWT()}`;
 
 		//Act
 		await authenticate(req, res, next);

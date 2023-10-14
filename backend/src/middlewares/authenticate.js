@@ -3,7 +3,7 @@ export default ({
 	verifyToken,
 	UserModel
 }) => async (req, res, next) => {
-	const authHeader = req.headers["Authorization"];
+	const authHeader = req.headers["authorization"];
 
 	if (!authHeader)
 		return res.sendStatus(401);
