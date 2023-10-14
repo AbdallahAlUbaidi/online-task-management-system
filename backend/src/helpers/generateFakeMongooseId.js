@@ -1,3 +1,3 @@
 import mongoose from "mongoose";
 
-export default () => new mongoose.Types.ObjectId();
+export default () => new mongoose.Types.ObjectId().toString();
