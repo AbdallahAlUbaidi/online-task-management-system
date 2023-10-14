@@ -1,6 +1,7 @@
 export default ({
 	getUserById,
-	verifyToken
+	verifyToken,
+	UserModel
 }) => async (req, res, next) => {
 	const authHeader = req.headers["Authorization"];
 
@@ -13,7 +14,10 @@ export default ({
 	if (!payload)
 		return res.sendStatus(401);
 
-	const user = await getUserById(payload.sub);
+	const user = await getUserById({
+		id: payload.sub,
+		UserModel
+	});
 
 	if (!user)
 		return res.sendStatus(401);
