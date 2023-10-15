@@ -16,7 +16,7 @@ const taskSchema = new mongoose.Schema({
 		default: false
 	},
 
-	user_id: {
+	userId: {
 		type: mongoose.SchemaTypes.ObjectId,
 		ref: "User"
 	}
