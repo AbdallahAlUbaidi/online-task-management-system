@@ -73,7 +73,7 @@ describe("Create task service", () => {
 		TaskModel.create = vi.fn();
 	});
 
-	it("should create a task and save it to the database when given task description", async () => {
+	it("should create a task and save it to the database when given task title and a dueDate", async () => {
 		//Arrange
 		TaskModel.create.mockImplementationOnce(() =>
 			Promise.resolve({

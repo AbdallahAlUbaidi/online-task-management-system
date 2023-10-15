@@ -9,7 +9,7 @@ export const getTasksByUserId = async ({
 }) => {
 	if (!userId)
 		throw new ApiError(UNAUTHENTICATED_ERROR, "User id is undefined", 401);
-	
+
 	return TaskModel.find({
 		userId
 	});
@@ -17,12 +17,14 @@ export const getTasksByUserId = async ({
 
 
 export const createTask = async ({
-	description,
+	title,
+	dueDate,
 	userId,
 	TaskModel,
 }) => {
 	return await TaskModel.create({
-		description,
+		title,
+		dueDate,
 		userId
 	});
 };

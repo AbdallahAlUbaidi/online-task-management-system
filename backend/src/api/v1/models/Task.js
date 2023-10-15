@@ -1,11 +1,15 @@
 import mongoose from "mongoose";
 
 const taskSchema = new mongoose.Schema({
-	description: {
+	title: {
 		type: mongoose.SchemaTypes.String,
 		required: true,
 		minLength: 10,
 		maxLength: 256,
+	},
+	dueDate: {
+		type: mongoose.SchemaTypes.Date,
+		required: true,
 	},
 
 	completed: {
