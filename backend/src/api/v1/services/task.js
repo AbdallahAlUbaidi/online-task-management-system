@@ -1,4 +1,4 @@
-import ApiError from "../../ApiError";
+import ApiError from "../../ApiError.js";
 import {
 	UNAUTHENTICATED_ERROR
 } from "../../../constants/apiErrorCodes.js";
