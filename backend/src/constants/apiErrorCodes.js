@@ -7,3 +7,5 @@ export const UNAUTHENTICATED_ERROR = 3;
 export const NOT_FOUND_ERROR = 4;
 
 export const INVALID_CREDENTIALS = 5;
+
+export const INVALID_INPUT = 6;
