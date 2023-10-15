@@ -2,7 +2,12 @@ import express from "express";
 
 const router = express.Router();
 
-export default ({ createTaskController }) => {
+export default ({
+	createTaskController,
+	getTasksController
+}) => {
+
+	router.get("/", getTasksController);
 
 	router.post("/", createTaskController);
 

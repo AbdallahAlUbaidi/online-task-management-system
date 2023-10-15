@@ -16,7 +16,8 @@ import {
 } from "../api/v1/services/user.js";
 
 import {
-	createTask
+	createTask,
+	getTasksByUserId
 } from "../api/v1/services/task.js";
 
 import {
@@ -41,7 +42,8 @@ import {
 } from "../api/v1/controllers/auth.js";
 
 import {
-	initializeCreateTaskController
+	initializeCreateTaskController,
+	initializeGetTasksController
 } from "../api/v1/controllers/task.js";
 
 import authRouterInitializer from "../api/v1/routes/auth.js";
@@ -66,6 +68,11 @@ const postLoginController = initializePostLoginController({
 	comparePasswords
 });
 
+
+const getTasksController = initializeGetTasksController({
+	TaskModel,
+	getTasksByUserId
+});
 const createTaskController = initializeCreateTaskController({
 	createTask,
 	TaskModel
@@ -87,7 +94,8 @@ app.use(initializeAuthenticate({
 }));
 
 app.use("/api/v1/task", taskRouterInitializer({
-	createTaskController
+	createTaskController,
+	getTasksController
 }));
 
 app.use(errorHandler);
