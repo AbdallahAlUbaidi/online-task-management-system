@@ -6,6 +6,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 import UserModel from "../api/v1/models/User.js";
+import TaskModel from "../api/v1/models/Task.js";
 
 import {
 	createUser,
@@ -13,6 +14,10 @@ import {
 	getUserByEmail,
 	getUserById
 } from "../api/v1/services/user.js";
+
+import {
+	createTask
+} from "../api/v1/services/task.js";
 
 import {
 	validateUsername,
@@ -35,7 +40,13 @@ import {
 	initializePostLoginController
 } from "../api/v1/controllers/auth.js";
 
+import {
+	initializeCreateTaskController
+} from "../api/v1/controllers/task.js";
+
 import authRouterInitializer from "../api/v1/routes/auth.js";
+import taskRouterInitializer from "../api/v1/routes/task.js";
+
 
 const postRegisterController = initializePostRegisterController({
 	createUser,
@@ -55,7 +66,13 @@ const postLoginController = initializePostLoginController({
 	comparePasswords
 });
 
+const createTaskController = initializeCreateTaskController({
+	createTask,
+	TaskModel
+});
+
 import errorHandler from "../middlewares/errorHandler.js";
+
 import initializeAuthenticate from "../middlewares/authenticate.js";
 
 app.use("/api/v1/auth", authRouterInitializer({
@@ -67,6 +84,10 @@ app.use(initializeAuthenticate({
 	verifyToken,
 	getUserById,
 	UserModel
+}));
+
+app.use("/api/v1/task", taskRouterInitializer({
+	createTaskController
 }));
 
 app.use(errorHandler);
