@@ -9,3 +9,7 @@ export const NOT_FOUND_ERROR = 4;
 export const INVALID_CREDENTIALS = 5;
 
 export const INVALID_INPUT = 6;
+
+export const UNAUTHORIZED = 7;
+
+export const INVALID_ID = 8;
