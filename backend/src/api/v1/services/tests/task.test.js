@@ -4,6 +4,7 @@ import { faker } from "@faker-js/faker";
 import ApiError from "../../../ApiError.js";
 import {
 	INVALID_INPUT,
+	NOT_FOUND_ERROR,
 	UNAUTHENTICATED_ERROR
 } from "../../../../constants/apiErrorCodes.js";
 
@@ -12,7 +13,8 @@ import generateFakeMongooseId from "../../../../helpers/generateFakeMongooseId.j
 import {
 	createTask,
 	getTasksByUserId,
-	getTaskById
+	getTaskById,
+	deleteTask
 } from "../task.js";
 
 describe("Get tasks by user id service", () => {
@@ -171,6 +173,56 @@ describe("Get a task by id service", () => {
 			//Assert
 			expect(err).toBeInstanceOf(ApiError);
 			expect(err.errorCode).toBe(INVALID_INPUT);
+
+		}
+	});
+});
+
+describe("Delete task service", () => {
+	let TaskModel = {};
+
+	beforeEach(() => {
+		TaskModel.deleteOne = vi.fn();
+	});
+
+	it("Should delete a task given it's id", async () => {
+		//Arrange
+		const taskId = generateFakeMongooseId();
+		TaskModel.deleteOne
+			.mockImplementationOnce(() =>
+				Promise.resolve({ "n": 1, "ok": 1, "deletedCount": 1 }));
+
+		//Act
+		await deleteTask({
+			TaskModel,
+			taskId
+		});
+
+		//Assert
+		expect(TaskModel.deleteOne).toBeCalledWith({ _id: taskId });
+	});
+
+	it("Should throw an api not found error if a task with the specified taskId was not found", async () => {
+		//Arrange
+		const taskId = generateFakeMongooseId();
+		TaskModel.deleteOne.mockImplementationOnce(() =>
+			Promise.resolve({
+				n: 0,
+				ok: 1
+			}));
+
+		try {
+			//Act
+			await deleteTask({
+				taskId,
+				TaskModel
+			});
+			throw ("Expected error to be thrown");
+		} catch (err) {
+			//Assert
+			expect(err).toBeInstanceOf(ApiError);
+			expect(err.errorCode).toBe(NOT_FOUND_ERROR);
+			expect(err.httpStatusCode).toBe(404);
 
 		}
 	});
