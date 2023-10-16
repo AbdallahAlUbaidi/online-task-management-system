@@ -89,8 +89,8 @@ export const initializeGetTaskController = ({
 
 		if (!task)
 			return res.sendStatus(404);
-
-		if (task.userId !== req.user._id)
+		
+		if (String(task.userId) !== String(req.user._id))
 			throw new ApiError(
 				UNAUTHORIZED,
 				"You are unauthorized to access this resource",
