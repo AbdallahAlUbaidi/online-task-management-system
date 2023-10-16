@@ -17,14 +17,19 @@ import {
 
 import {
 	createTask,
+	getTaskById,
 	getTasksByUserId
 } from "../api/v1/services/task.js";
 
 import {
 	validateUsername,
 	validateEmail,
-	validatePassword
+	validatePassword,
 } from "../api/v1/validators/user.js";
+
+import {
+	validateDatabaseId
+} from "../api/v1/validators/databaseId.js";
 
 import {
 	hashPassword,
@@ -43,7 +48,8 @@ import {
 
 import {
 	initializeCreateTaskController,
-	initializeGetTasksController
+	initializeGetTasksController,
+	initializeGetTaskController
 } from "../api/v1/controllers/task.js";
 
 import authRouterInitializer from "../api/v1/routes/auth.js";
@@ -73,6 +79,13 @@ const getTasksController = initializeGetTasksController({
 	TaskModel,
 	getTasksByUserId
 });
+
+const getTaskController = initializeGetTaskController({
+	TaskModel,
+	getTaskById,
+	validateDatabaseId
+});
+
 const createTaskController = initializeCreateTaskController({
 	createTask,
 	TaskModel
@@ -95,7 +108,8 @@ app.use(initializeAuthenticate({
 
 app.use("/api/v1/task", taskRouterInitializer({
 	createTaskController,
-	getTasksController
+	getTasksController,
+	getTaskController
 }));
 
 app.use(errorHandler);

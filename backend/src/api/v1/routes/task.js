@@ -4,10 +4,13 @@ const router = express.Router();
 
 export default ({
 	createTaskController,
-	getTasksController
+	getTasksController,
+	getTaskController
 }) => {
 
 	router.get("/", getTasksController);
+
+	router.get("/:taskId", getTaskController);
 
 	router.post("/", createTaskController);
 
