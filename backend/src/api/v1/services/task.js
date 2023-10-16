@@ -1,6 +1,7 @@
 import ApiError from "../../ApiError.js";
 import {
 	INVALID_INPUT,
+	NOT_FOUND_ERROR,
 	UNAUTHENTICATED_ERROR
 } from "../../../constants/apiErrorCodes.js";
 
@@ -42,4 +43,17 @@ export const createTask = async ({
 		dueDate,
 		userId
 	});
+};
+
+export const deleteTask = async ({
+	TaskModel,
+	taskId
+}) => {
+	const result = await TaskModel.deleteOne({ _id: taskId });
+	if (result.n <= 0)
+		throw new ApiError(
+			NOT_FOUND_ERROR,
+			"The task you are trying to delete does not exists",
+			404
+		);
 };
