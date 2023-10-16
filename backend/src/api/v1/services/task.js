@@ -1,5 +1,6 @@
 import ApiError from "../../ApiError.js";
 import {
+	INVALID_INPUT,
 	UNAUTHENTICATED_ERROR
 } from "../../../constants/apiErrorCodes.js";
 
@@ -15,6 +16,20 @@ export const getTasksByUserId = async ({
 	});
 };
 
+export const getTaskById = async ({
+	TaskModel,
+	taskId
+}) => {
+
+	if (!taskId)
+		throw new ApiError(
+			INVALID_INPUT,
+			"Task id is invalid or unspecified",
+			400
+		);
+
+	return TaskModel.findOne({ _id: taskId });
+};
 
 export const createTask = async ({
 	title,
