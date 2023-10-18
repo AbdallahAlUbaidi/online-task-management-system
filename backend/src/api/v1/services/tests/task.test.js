@@ -3,6 +3,7 @@ import { faker } from "@faker-js/faker";
 
 import ApiError from "../../../ApiError.js";
 import {
+	INVALID_ID,
 	INVALID_INPUT,
 	NOT_FOUND_ERROR,
 	UNAUTHENTICATED_ERROR
@@ -14,7 +15,8 @@ import {
 	createTask,
 	getTasksByUserId,
 	getTaskById,
-	deleteTask
+	deleteTask,
+	updateTaskTitle,
 } from "../task.js";
 
 describe("Get tasks by user id service", () => {
@@ -224,6 +226,112 @@ describe("Delete task service", () => {
 			expect(err.errorCode).toBe(NOT_FOUND_ERROR);
 			expect(err.httpStatusCode).toBe(404);
 
+		}
+	});
+});
+
+describe("Update task title service", () => {
+	let TaskModel = {};
+	let validateDatabaseId;
+
+	beforeEach(() => {
+		TaskModel.updateOne = vi.fn();
+		validateDatabaseId = vi.fn(() => true);
+	});
+
+	it("Should update task title given a valid taskId and a title", async () => {
+		//Arrange
+		const title = faker.lorem.sentence();
+		const taskId = generateFakeMongooseId();
+
+		const updateResultObj = {
+			acknowledged: true,
+			matchedCount: 1,
+			modifiedCount: 1
+		};
+
+		TaskModel.updateOne.mockImplementationOnce(() =>
+			Promise.resolve(updateResultObj));
+
+		//Act
+		await updateTaskTitle({
+			TaskModel,
+			taskId,
+			title,
+			validateDatabaseId
+		});
+
+		//Assert
+		expect(TaskModel.updateOne)
+			.toBeCalledWith({ _id: taskId }, { title });
+	});
+
+	it("Should throw an invalid input api error if no title is passed", async () => {
+		//Arrange
+		const title = undefined;
+		const taskId = generateFakeMongooseId();
+
+		try {
+			//Act
+			await updateTaskTitle({
+				TaskModel,
+				taskId,
+				title,
+				validateDatabaseId
+			});
+
+			throw ("Expect an error to be thrown");
+		} catch (err) {
+			//Assert
+			expect(err).toBeInstanceOf(ApiError);
+			expect(err.errorCode).toBe(INVALID_INPUT);
+		}
+	});
+
+	it("Should throw an invalid id api error if no task id is passed", async () => {
+		//Arrange
+		const taskId = undefined;
+		const title = faker.lorem.sentence();
+		validateDatabaseId.mockImplementationOnce(() => false);
+
+		try {
+			//Act
+			await updateTaskTitle({
+				TaskModel,
+				title,
+				taskId,
+				validateDatabaseId
+			});
+
+			throw ("Expected an error to be thrown");
+		} catch (err) {
+			//Assert
+			expect(err).toBeInstanceOf(ApiError);
+			expect(err.errorCode).toBe(INVALID_ID);
+		}
+	});
+
+	it("Should throw an invalid id api error if an invalid task id is passed", async () => {
+		//Arrange
+		const taskId = "Something invalid";
+		const title = faker.lorem.sentence();
+
+		validateDatabaseId.mockImplementationOnce(() => false);
+
+		try {
+			//Act
+			await updateTaskTitle({
+				TaskModel,
+				title,
+				taskId,
+				validateDatabaseId
+			});
+
+			throw ("Expected an error to be thrown");
+		} catch (err) {
+			//Assert
+			expect(err).toBeInstanceOf(ApiError);
+			expect(err.errorCode).toBe(INVALID_ID);
 		}
 	});
 });
