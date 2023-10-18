@@ -5,7 +5,8 @@ const router = express.Router();
 export default ({
 	createTaskController,
 	getTasksController,
-	getTaskController
+	getTaskController,
+	deleteTaskController
 }) => {
 
 	router.get("/", getTasksController);
@@ -13,6 +14,8 @@ export default ({
 	router.get("/:taskId", getTaskController);
 
 	router.post("/", createTaskController);
+
+	router.delete("/:taskId", deleteTaskController);
 
 	return router;
 };
