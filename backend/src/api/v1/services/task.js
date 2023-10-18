@@ -1,5 +1,6 @@
 import ApiError from "../../ApiError.js";
 import {
+	INVALID_ID,
 	INVALID_INPUT,
 	NOT_FOUND_ERROR,
 	UNAUTHENTICATED_ERROR
@@ -56,4 +57,28 @@ export const deleteTask = async ({
 			"The task you are trying to delete does not exists",
 			404
 		);
+};
+
+export const updateTaskTitle = async ({
+	TaskModel,
+	taskId,
+	title,
+	validateDatabaseId
+}) => {
+
+	if (!validateDatabaseId(taskId))
+		throw new ApiError(
+			INVALID_ID,
+			"No task id specified",
+			400
+		);
+
+	if (!title)
+		throw new ApiError(
+			INVALID_INPUT,
+			"No valid title was passed",
+			400
+		);
+
+	await TaskModel.updateOne({ _id: taskId }, { title });
 };
