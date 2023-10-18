@@ -17,6 +17,7 @@ import {
 	getTaskById,
 	deleteTask,
 	updateTaskTitle,
+	updateTaskStatus,
 } from "../task.js";
 
 describe("Get tasks by user id service", () => {
@@ -323,6 +324,113 @@ describe("Update task title service", () => {
 			await updateTaskTitle({
 				TaskModel,
 				title,
+				taskId,
+				validateDatabaseId
+			});
+
+			throw ("Expected an error to be thrown");
+		} catch (err) {
+			//Assert
+			expect(err).toBeInstanceOf(ApiError);
+			expect(err.errorCode).toBe(INVALID_ID);
+		}
+	});
+});
+
+describe("Update task status service", () => {
+	let TaskModel = {};
+	let validateDatabaseId;
+
+	beforeEach(() => {
+		TaskModel.updateOne = vi.fn();
+		validateDatabaseId = vi.fn(() => true);
+	});
+
+	it("Should update task status given a valid task id and a boolean \"completed\"", async () => {
+		//Arrange
+		const completed = Math.random() <= .5;
+		const taskId = generateFakeMongooseId();
+
+		const updateResultObj = {
+			acknowledged: true,
+			matchedCount: 1,
+			modifiedCount: 1
+		};
+
+		TaskModel.updateOne.mockImplementationOnce(() =>
+			Promise.resolve(updateResultObj));
+
+		//Act
+		await updateTaskStatus({
+			TaskModel,
+			taskId,
+			completed,
+			validateDatabaseId
+		});
+
+		//Assert
+		expect(TaskModel.updateOne)
+			.toBeCalledWith({ _id: taskId }, { completed });
+	});
+
+
+	it("Should throw an invalid input api error if completed is undefined", async () => {
+		//Arrange
+		const completed = undefined;
+		const taskId = generateFakeMongooseId();
+
+		try {
+			//Act
+			await updateTaskStatus({
+				TaskModel,
+				taskId,
+				completed,
+				validateDatabaseId
+			});
+
+			throw ("Expect an error to be thrown");
+		} catch (err) {
+			//Assert
+			expect(err).toBeInstanceOf(ApiError);
+			expect(err.errorCode).toBe(INVALID_INPUT);
+		}
+	});
+
+	it("Should throw an invalid id api error if no task id is passed", async () => {
+		//Arrange
+		const taskId = undefined;
+		const completed = Math.random() * .5;
+		validateDatabaseId.mockImplementationOnce(() => false);
+
+		try {
+			//Act
+			await updateTaskStatus({
+				TaskModel,
+				completed,
+				taskId,
+				validateDatabaseId
+			});
+
+			throw ("Expected an error to be thrown");
+		} catch (err) {
+			//Assert
+			expect(err).toBeInstanceOf(ApiError);
+			expect(err.errorCode).toBe(INVALID_ID);
+		}
+	});
+
+	it("Should throw an invalid id api error if an invalid task id is passed", async () => {
+		//Arrange
+		const taskId = "Something invalid";
+		const completed = Math.random() <= .5;
+
+		validateDatabaseId.mockImplementationOnce(() => false);
+
+		try {
+			//Act
+			await updateTaskStatus({
+				TaskModel,
+				completed,
 				taskId,
 				validateDatabaseId
 			});
