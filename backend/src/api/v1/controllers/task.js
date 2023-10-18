@@ -2,6 +2,7 @@ import ApiError from "../../ApiError.js";
 import {
 	INVALID_ID,
 	INVALID_INPUT,
+	NOT_FOUND_ERROR,
 	UNAUTHENTICATED_ERROR,
 	UNAUTHORIZED
 } from "../../../constants/apiErrorCodes.js";
@@ -89,7 +90,7 @@ export const initializeGetTaskController = ({
 
 		if (!task)
 			return res.sendStatus(404);
-		
+
 		if (String(task.userId) !== String(req.user._id))
 			throw new ApiError(
 				UNAUTHORIZED,
@@ -102,4 +103,56 @@ export const initializeGetTaskController = ({
 		next(err);
 	}
 
+};
+
+export const initializeDeleteTaskController = ({
+	deleteTaskService,
+	validateDatabaseId,
+	getTaskById,
+	TaskModel
+}) => async (req, res, next) => {
+
+	const { taskId } = req.params;
+	
+	try {
+
+		if (!validateDatabaseId(taskId))
+			throw new ApiError(
+				INVALID_ID,
+				"Task id is not valid",
+				400);
+
+		if (!req.user)
+			throw new ApiError(
+				UNAUTHENTICATED_ERROR,
+				"you are not authenticated",
+				401
+			);
+
+		const task = await getTaskById({ TaskModel, taskId });
+
+		if (!task)
+			throw new ApiError(
+				NOT_FOUND_ERROR,
+				"The task was not found",
+				404
+			);
+
+		if (String(task.userId) !== String(req.user._id))
+			throw new ApiError(
+				UNAUTHORIZED,
+				"You are not authorized to access this resource",
+				403
+			);
+
+		await deleteTaskService({
+			TaskModel,
+			taskId
+		});
+
+		res.sendStatus(200);
+
+	} catch (err) {
+		next(err);
+	}
 };
