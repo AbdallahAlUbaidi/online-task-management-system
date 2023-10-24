@@ -80,7 +80,7 @@ export const updateTaskTitle = async ({
 			400
 		);
 
-	await TaskModel.updateOne({ _id: taskId }, { title });
+	return await TaskModel.findByIdAndUpdate(taskId, { title }, { new: true });
 };
 
 export const updateTaskStatus = async ({
@@ -96,14 +96,14 @@ export const updateTaskStatus = async ({
 			"Task status is not specified",
 			400
 		);
-	
+
 	if (!validateDatabaseId(taskId))
 		throw new ApiError(
 			INVALID_ID,
 			"The passed task id is invalid",
 			400
 		);
-	
 
-	await TaskModel.updateOne({ _id: taskId }, { completed });
+
+	return await TaskModel.findByIdAndUpdate(taskId, { completed }, { new: true });
 };

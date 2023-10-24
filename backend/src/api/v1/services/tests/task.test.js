@@ -236,26 +236,27 @@ describe("Update task title service", () => {
 	let validateDatabaseId;
 
 	beforeEach(() => {
-		TaskModel.updateOne = vi.fn();
+		TaskModel.findByIdAndUpdate = vi.fn();
 		validateDatabaseId = vi.fn(() => true);
 	});
 
-	it("Should update task title given a valid taskId and a title", async () => {
+	it("Should return the updated task object given a valid taskId and a title", async () => {
 		//Arrange
 		const title = faker.lorem.sentence();
 		const taskId = generateFakeMongooseId();
+		const completed = Math.random() >= .5;
 
 		const updateResultObj = {
-			acknowledged: true,
-			matchedCount: 1,
-			modifiedCount: 1
+			_id: taskId,
+			title,
+			completed
 		};
 
-		TaskModel.updateOne.mockImplementationOnce(() =>
+		TaskModel.findByIdAndUpdate.mockImplementationOnce(() =>
 			Promise.resolve(updateResultObj));
 
 		//Act
-		await updateTaskTitle({
+		const newTask = await updateTaskTitle({
 			TaskModel,
 			taskId,
 			title,
@@ -263,8 +264,7 @@ describe("Update task title service", () => {
 		});
 
 		//Assert
-		expect(TaskModel.updateOne)
-			.toBeCalledWith({ _id: taskId }, { title });
+		expect(newTask).toStrictEqual(updateResultObj);
 	});
 
 	it("Should throw an invalid input api error if no title is passed", async () => {
@@ -342,26 +342,26 @@ describe("Update task status service", () => {
 	let validateDatabaseId;
 
 	beforeEach(() => {
-		TaskModel.updateOne = vi.fn();
+		TaskModel.findByIdAndUpdate = vi.fn();
 		validateDatabaseId = vi.fn(() => true);
 	});
 
-	it("Should update task status given a valid task id and a boolean \"completed\"", async () => {
+	it("Should return the updated task object given a valid task id and a boolean \"completed\"", async () => {
 		//Arrange
 		const completed = Math.random() <= .5;
 		const taskId = generateFakeMongooseId();
 
 		const updateResultObj = {
-			acknowledged: true,
-			matchedCount: 1,
-			modifiedCount: 1
+			_id: taskId,
+			title: faker.lorem.sentence(),
+			completed,
 		};
 
-		TaskModel.updateOne.mockImplementationOnce(() =>
+		TaskModel.findByIdAndUpdate.mockImplementationOnce(() =>
 			Promise.resolve(updateResultObj));
 
 		//Act
-		await updateTaskStatus({
+		const newTask = await updateTaskStatus({
 			TaskModel,
 			taskId,
 			completed,
@@ -369,10 +369,8 @@ describe("Update task status service", () => {
 		});
 
 		//Assert
-		expect(TaskModel.updateOne)
-			.toBeCalledWith({ _id: taskId }, { completed });
+		expect(newTask).toStrictEqual(updateResultObj);
 	});
-
 
 	it("Should throw an invalid input api error if completed is undefined", async () => {
 		//Arrange
