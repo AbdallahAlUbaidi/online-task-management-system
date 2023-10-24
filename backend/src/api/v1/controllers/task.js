@@ -113,7 +113,7 @@ export const initializeDeleteTaskController = ({
 }) => async (req, res, next) => {
 
 	const { taskId } = req.params;
-	
+
 	try {
 
 		if (!validateDatabaseId(taskId))
@@ -152,6 +152,60 @@ export const initializeDeleteTaskController = ({
 
 		res.sendStatus(200);
 
+	} catch (err) {
+		next(err);
+	}
+};
+
+export const initializeUpdateTaskController = ({
+	TaskModel,
+	findTaskById,
+	updateTaskStatus,
+	updateTaskTitle
+}) => async (req, res, next) => {
+	try {
+
+		if (!req.body.title &&
+			(req.body.completed === undefined ||
+				req.body.completed === null))
+			throw (new ApiError(
+				INVALID_INPUT,
+				"Information of updated task is missing",
+				400
+			));
+
+		const { title, completed } = req.body;
+		const { taskId } = req.params;
+
+		const task = await findTaskById({
+			taskId,
+			TaskModel
+		});
+
+		if (task.userId !== req.user._id)
+			throw (new ApiError(
+				UNAUTHORIZED,
+				"You are unauthorized to access this resource",
+				403
+			));
+
+		let newTask;
+
+		if (title)
+			newTask = await updateTaskTitle({
+				taskId,
+				title,
+				TaskModel
+			});
+
+		if (completed !== undefined && completed !== null)
+			newTask = await updateTaskStatus({
+				taskId,
+				completed,
+				TaskModel
+			});
+
+		res.status(200).json(newTask);
 	} catch (err) {
 		next(err);
 	}
