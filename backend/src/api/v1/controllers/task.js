@@ -159,9 +159,10 @@ export const initializeDeleteTaskController = ({
 
 export const initializeUpdateTaskController = ({
 	TaskModel,
-	findTaskById,
+	getTaskById,
 	updateTaskStatus,
-	updateTaskTitle
+	updateTaskTitle,
+	validateDatabaseId
 }) => async (req, res, next) => {
 	try {
 
@@ -177,12 +178,12 @@ export const initializeUpdateTaskController = ({
 		const { title, completed } = req.body;
 		const { taskId } = req.params;
 
-		const task = await findTaskById({
+		const task = await getTaskById({
 			taskId,
 			TaskModel
 		});
 
-		if (task.userId !== req.user._id)
+		if (String(task.userId) !== String(req.user._id))
 			throw (new ApiError(
 				UNAUTHORIZED,
 				"You are unauthorized to access this resource",
@@ -195,14 +196,16 @@ export const initializeUpdateTaskController = ({
 			newTask = await updateTaskTitle({
 				taskId,
 				title,
-				TaskModel
+				TaskModel,
+				validateDatabaseId
 			});
 
 		if (completed !== undefined && completed !== null)
 			newTask = await updateTaskStatus({
 				taskId,
 				completed,
-				TaskModel
+				TaskModel,
+				validateDatabaseId
 			});
 
 		res.status(200).json(newTask);

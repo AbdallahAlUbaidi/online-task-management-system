@@ -19,7 +19,9 @@ import {
 	createTask,
 	getTaskById,
 	getTasksByUserId,
-	deleteTask
+	deleteTask,
+	updateTaskStatus,
+	updateTaskTitle
 } from "../api/v1/services/task.js";
 
 import {
@@ -51,7 +53,8 @@ import {
 	initializeCreateTaskController,
 	initializeGetTasksController,
 	initializeGetTaskController,
-	initializeDeleteTaskController
+	initializeDeleteTaskController,
+	initializeUpdateTaskController
 } from "../api/v1/controllers/task.js";
 
 import authRouterInitializer from "../api/v1/routes/auth.js";
@@ -100,6 +103,14 @@ const deleteTaskController = initializeDeleteTaskController({
 	validateDatabaseId
 });
 
+const updateTaskController = initializeUpdateTaskController({
+	TaskModel,
+	getTaskById,
+	updateTaskStatus,
+	updateTaskTitle,
+	validateDatabaseId
+});
+
 import errorHandler from "../middlewares/errorHandler.js";
 
 import initializeAuthenticate from "../middlewares/authenticate.js";
@@ -119,7 +130,8 @@ app.use("/api/v1/task", taskRouterInitializer({
 	createTaskController,
 	getTasksController,
 	getTaskController,
-	deleteTaskController
+	deleteTaskController,
+	updateTaskController
 }));
 
 app.use(errorHandler);

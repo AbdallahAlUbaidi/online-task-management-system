@@ -6,7 +6,8 @@ export default ({
 	createTaskController,
 	getTasksController,
 	getTaskController,
-	deleteTaskController
+	deleteTaskController,
+	updateTaskController
 }) => {
 
 	router.get("/", getTasksController);
@@ -16,6 +17,8 @@ export default ({
 	router.post("/", createTaskController);
 
 	router.delete("/:taskId", deleteTaskController);
+
+	router.put("/:taskId", updateTaskController);
 
 	return router;
 };

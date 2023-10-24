@@ -24,7 +24,7 @@ describe("Update task controller", () => {
 	let req, res, next,
 		updateTaskController, TaskModel,
 		updateTaskStatus, updateTaskTitle,
-		findTaskById;
+		getTaskById;
 
 	beforeEach(() => {
 		req = new Request();
@@ -38,7 +38,7 @@ describe("Update task controller", () => {
 
 		updateTaskStatus = vi.fn();
 		updateTaskTitle = vi.fn();
-		findTaskById = vi.fn(() =>
+		getTaskById = vi.fn(() =>
 			Promise.resolve({
 				_id: generateFakeMongooseId,
 				userId: req.user._id
@@ -48,7 +48,7 @@ describe("Update task controller", () => {
 			TaskModel,
 			updateTaskStatus,
 			updateTaskTitle,
-			findTaskById
+			getTaskById
 		});
 
 
@@ -108,7 +108,7 @@ describe("Update task controller", () => {
 		while (taskOwnerId === req.user._id)
 			taskOwnerId = generateFakeMongooseId();
 
-		findTaskById.mockImplementationOnce(() =>
+		getTaskById.mockImplementationOnce(() =>
 			Promise.resolve({
 				_id: req.params.taskId,
 				title: faker.lorem.sentence(),
